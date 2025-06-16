@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme{
+  --color-night : #222831;
+  --color-nightbg : #393E46;
+  --color-nightv: #948979;
+  --color-nightu: #DFD0B8;
+}
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
