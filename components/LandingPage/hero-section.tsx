@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Star, Play, ArrowRight } from "lucide-react"
-
+import Link from "next/link"
 export default function HeroSection() {
   return (
     <div className="container mx-auto px-4 md:px-6">
@@ -26,6 +26,7 @@ export default function HeroSection() {
           </div>
 
           <div className="space-y-4">
+            <Link href={"/signin"}>
             <Button
               size="lg"
               className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-medium rounded-md"
@@ -50,6 +51,7 @@ export default function HeroSection() {
               </svg>
               Sign up with Google
             </Button>
+            </Link>
           </div>
 
           <p className="text-sm text-gray-500">No credit card required.</p>
