@@ -76,7 +76,7 @@ export default function HeroSection() {
                   <div className="text-sm text-gray-600">Tell FormAI what you need:</div>
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <div className="text-gray-900 font-medium animate-pulse">
-                      "Create a customer feedback survey for my restaurant"
+                      &quot;Create a customer feedback survey for my restaurant&quot;
                     </div>
                   </div>
                 </div>

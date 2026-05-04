@@ -128,6 +128,7 @@ export interface GoogleFormPageBreakItem {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GoogleFormTextItem {
   // No additional properties for text items
 }

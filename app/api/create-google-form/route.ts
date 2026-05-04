@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFormsClient, createDriveClient, validateAccessToken } from '@/lib/google-api';
-import { GoogleFormStructure, GoogleFormItem } from '@/lib/types';
+import { GoogleFormItem } from '@/lib/types';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 
@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     if (formStructure.items && formStructure.items.length > 0) {
       const batchUpdateRequests = formStructure.items.map((item: GoogleFormItem, index: number) => {
         // Create a minimal item structure that the Google Forms API supports
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cleanItem: any = {
           title: item.title,
         };
@@ -170,13 +171,14 @@ export async function POST(request: NextRequest) {
             requests: batchUpdateRequests
           }
         });
-      } catch (batchError: any) {
+      } catch (batchError: unknown) {
+        const error = batchError as { message: string; response?: { data: unknown; status: number } };
         console.error('Batch update error details:', {
-          error: batchError.message,
-          response: batchError.response?.data,
-          status: batchError.response?.status
+          error: error.message,
+          response: error.response?.data,
+          status: error.response?.status
         });
-        throw batchError;
+        throw error;
       }
     }
 
@@ -211,18 +213,19 @@ export async function POST(request: NextRequest) {
       form: form
     });
 
-  } catch (error: any) {
-    console.error('Create form error:', error);
+  } catch (error: unknown) {
+    const apiError = error as { code?: number; message: string };
+    console.error('Create form error:', apiError);
     
     // Handle specific Google API errors
-    if (error.code === 401) {
+    if (apiError.code === 401) {
       return NextResponse.json(
         { error: "Authentication failed. Please sign in again." },
         { status: 401 }
       );
     }
     
-    if (error.code === 403) {
+    if (apiError.code === 403) {
       return NextResponse.json(
         { error: "Permission denied. Please ensure you have the necessary permissions." },
         { status: 403 }
@@ -237,7 +240,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to check authentication status
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get the session to access the access token
     const session = await getServerSession(authOptions);
@@ -267,7 +270,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Authentication check error:', error);
+    console.error('Authentication check error:', apiError);
     return NextResponse.json(
       { error: "Failed to verify authentication" },
       { status: 500 }

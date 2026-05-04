@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to extract JSON from the response
-    let jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json(
         { error: "Failed to generate valid JSON structure from Gemini response" },
@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
     let formStructure: GoogleFormStructure;
     try {
       formStructure = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { error: "Failed to parse JSON response from Gemini API" },
         { status: 500 }

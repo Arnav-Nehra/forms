@@ -9,7 +9,6 @@ import {
   Loader2,
   ExternalLink,
   Edit,
-  Trash2,
   AlertCircle,
   FileText,
   Plus,
@@ -27,7 +26,7 @@ interface Form {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -128,7 +127,7 @@ export default function DashboardPage() {
               No forms yet
             </h3>
             <p className="text-muted-foreground mb-6">
-              You haven't created any forms yet. Create your first form to get
+              You haven&apos;t created any forms yet. Create your first form to get
               started!
             </p>
             <Link href="/create-form">

@@ -19,7 +19,7 @@ export default function FeaturesSection() {
                 <Copy className="w-4 h-4 text-[#FF9494]" />
                 <span className="text-[#FF9494] font-medium text-sm">Smart Reuse</span>
               </div>
-              <h3 className="text-3xl font-bold text-gray-900">Build on what you've already created</h3>
+              <h3 className="text-3xl font-bold text-gray-900">Build on what you&apos;ve already created</h3>
               <p className="text-xl text-gray-600 leading-relaxed">
                 FormAI remembers your previous forms and suggests improvements. Create variations instantly or use past
                 forms as templates for new projects.

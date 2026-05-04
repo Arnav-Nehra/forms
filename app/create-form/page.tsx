@@ -96,8 +96,8 @@ export default function CreateFormPage() {
   const [loading, setLoading] = useState(false);
   const [formStructure, setFormStructure] = useState<GoogleFormStructure | null>(null);
   const [error, setError] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [createdForm, setCreatedForm] = useState<any>(null);
-  const [copied, setCopied] = useState(false);
 
   const generateForm = async () => {
     if (!prompt.trim()) {
@@ -143,7 +143,7 @@ export default function CreateFormPage() {
       return;
     }
 
-    if (!session?.accessToken) {
+    if (!(session as any)?.accessToken) {
       setError("No access token available. Please sign in again.");
       return;
     }
@@ -181,8 +181,6 @@ export default function CreateFormPage() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch (e) {
       console.error("Failed to copy:", e);
     }
@@ -309,7 +307,7 @@ export default function CreateFormPage() {
           </button>
           <h1 className="text-4xl font-semibold tracking-tight mt-3">Review your form</h1>
           <p className="text-muted-foreground mt-2">
-            Here's what will be created. Click "Create form" to publish it to your Google Drive.
+            Here&apos;s what will be created. Click &quot;Create form&quot; to publish it to your Google Drive.
           </p>
           <Card className="mt-8 p-6 border-border shadow-none">
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Prompt</p>

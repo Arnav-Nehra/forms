@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import NextAuth, { NextAuthOptions } from "next-auth"    
+import NextAuth from "next-auth/next"
 import Google from "next-auth/providers/google"
 
 
-export const authOptions : NextAuthOptions = {
+export const authOptions: any = {
     providers:[
         Google({
             clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -28,7 +28,8 @@ export const authOptions : NextAuthOptions = {
     session: { strategy: "jwt" },
     
     callbacks: {
-        async jwt({ token, account, user }) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async jwt({ token, account }: any) {
             // Persist the OAuth access_token to the token right after signin
             if (account) {
                 token.accessToken = account.access_token;
@@ -37,12 +38,14 @@ export const authOptions : NextAuthOptions = {
             }
             return token;
         },
-        async session({ session, token }) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async session({ session, token }: any) {
             // Send properties to the client
             session.accessToken = token.accessToken;
             return session;
         },
-        async redirect({ url, baseUrl }) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async redirect({ url, baseUrl }: any): Promise<string> {
             // If the callback url is relative, make it absolute
             if (url.startsWith("/")) {
                 return `${baseUrl}${url}`;
