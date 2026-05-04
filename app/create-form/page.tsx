@@ -96,7 +96,6 @@ export default function CreateFormPage() {
   const [loading, setLoading] = useState(false);
   const [formStructure, setFormStructure] = useState<GoogleFormStructure | null>(null);
   const [error, setError] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [createdForm, setCreatedForm] = useState<any>(null);
 
   const generateForm = async () => {

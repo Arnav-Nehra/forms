@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createFormsClient, createDriveClient, validateAccessToken } from '@/lib/google-api';
 import { GoogleFormItem } from '@/lib/types';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
     if (formStructure.items && formStructure.items.length > 0) {
       const batchUpdateRequests = formStructure.items.map((item: GoogleFormItem, index: number) => {
         // Create a minimal item structure that the Google Forms API supports
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cleanItem: any = {
           title: item.title,
         };

@@ -267,7 +267,6 @@ export function convertToGoogleFormsFormat(formStructure: GoogleFormStructure): 
  * @param item - The form item to analyze
  * @returns The question type or null if not a question
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getQuestionType(item: any): QuestionType | null {
   if (!item.questionItem?.question) return null;
 
