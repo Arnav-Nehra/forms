@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFormsClient, createDriveClient, validateAccessToken } from '@/lib/google-api';
 import { GoogleFormItem } from '@/lib/types';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-config';
 
 export async function POST(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the session to access the access token
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as any;
     
     if (!session?.accessToken) {
       return NextResponse.json(
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     // Get the session to access the access token
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as any;
     
     if (!session?.accessToken) {
       return NextResponse.json(
@@ -269,7 +269,7 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error('Authentication check error:', apiError);
+    console.error('Authentication check error:', error);
     return NextResponse.json(
       { error: "Failed to verify authentication" },
       { status: 500 }
