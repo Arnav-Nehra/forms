@@ -69,7 +69,7 @@ export default function HowItWorks() {
                   <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                     <div className="text-left">
                       <div className="text-xs text-gray-400 mb-1">You type:</div>
-                      <div className="text-xs text-gray-700 italic">"Event registration with dietary preferences"</div>
+                      <div className="text-xs text-gray-700 italic">&quot;Event registration with dietary preferences&quot;</div>
                     </div>
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export default function HowItWorks() {
               size="lg"
               className="bg-[#FF9494] hover:bg-[#FFD1D1] text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
             >
-              Try it now — it's free
+              Try it now — it&apos;s free
             </Button>
           </div>
         </div>

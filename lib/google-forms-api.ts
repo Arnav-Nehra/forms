@@ -213,10 +213,10 @@ export function validateFormStructure(formStructure: GoogleFormStructure): Valid
 
         // Validate rating questions
         if (question.ratingQuestion) {
-          if (!['STAR', 'HEART', 'THUMB'].includes(question.ratingQuestion.type)) {
+          if (question.ratingQuestion.type && !['STAR', 'HEART', 'THUMB'].includes(question.ratingQuestion.type)) {
             errors.push(`Item ${index + 1}: rating question type must be STAR, HEART, or THUMB`);
           }
-          if (question.ratingQuestion.low >= question.ratingQuestion.high) {
+          if (question.ratingQuestion.low !== undefined && question.ratingQuestion.high !== undefined && question.ratingQuestion.low >= question.ratingQuestion.high) {
             errors.push(`Item ${index + 1}: rating question low value must be less than high value`);
           }
         }
@@ -267,6 +267,7 @@ export function convertToGoogleFormsFormat(formStructure: GoogleFormStructure): 
  * @param item - The form item to analyze
  * @returns The question type or null if not a question
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getQuestionType(item: any): QuestionType | null {
   if (!item.questionItem?.question) return null;
 

@@ -71,6 +71,9 @@ export interface GoogleFormRowQuestion {
 
 export interface GoogleFormRatingQuestion {
   scale: number; // Rating scale level (3-10)
+  type?: string; // Rating type: STAR, HEART, THUMB
+  low?: number; // Minimum rating value
+  high?: number; // Maximum rating value
 }
 
 export interface GoogleFormQuestion {
@@ -185,7 +188,7 @@ export interface GenerateFormResponse {
   error?: string;
 }
 
-export interface CreateFormResponse extends GoogleForm {}
+export type CreateFormResponse = GoogleForm
 
 export interface UpdateFormRequest {
   requests: Array<{
