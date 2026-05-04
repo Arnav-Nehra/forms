@@ -1,20 +1,107 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { GoogleFormStructure } from "@/lib/types";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import Navbar from "@/components/LandingPage/Navbar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { Loader2, Sparkles, Check, ArrowLeft, ExternalLink, Copy, AlertCircle } from "lucide-react";
+
+type Step = "create" | "review" | "creating" | "done";
+
+const Preview = ({ title, empty, loading, formStructure }: { title?: string; empty?: boolean; loading?: boolean; formStructure?: GoogleFormStructure }) => (
+  <div className="h-full flex flex-col">
+    {loading ? (
+      <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
+        <div className="w-14 h-14 rounded-full bg-muted grid place-items-center">
+          <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-8 bg-muted rounded-lg w-48 animate-pulse" />
+          <div className="h-4 bg-muted rounded w-32 animate-pulse mx-auto" />
+        </div>
+      </div>
+    ) : empty ? (
+      <div className="h-full flex flex-col items-center justify-center text-center">
+        <div className="w-14 h-14 rounded-full bg-muted grid place-items-center mb-5">
+          <Sparkles className="w-6 h-6 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold text-lg">Your form preview</h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+          Describe your form on the left to see a live preview here.
+        </p>
+      </div>
+    ) : formStructure ? (
+      <div className="overflow-y-auto">
+        <h2 className="text-2xl font-semibold tracking-tight">{title || "Untitled form"}</h2>
+        {formStructure.info.description && (
+          <p className="text-sm text-muted-foreground mt-2 mb-6">{formStructure.info.description}</p>
+        )}
+        <div className="h-px bg-border my-6" />
+        <div className="space-y-6">
+          {formStructure.items.map((item, index) => (
+            <div key={index} className="space-y-2">
+              <div className="flex items-start gap-3">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-semibold text-muted-foreground flex-shrink-0 mt-0.5">
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <label className="font-medium text-foreground">{item.title}</label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {item.questionItem?.question?.textQuestion?.type === "SHORT_ANSWER" && "Short text"}
+                    {item.questionItem?.question?.textQuestion?.type === "PARAGRAPH" && "Long text"}
+                    {item.questionItem?.question?.choiceQuestion?.type === "RADIO" && "Multiple choice"}
+                    {item.questionItem?.question?.choiceQuestion?.type === "CHECKBOX" && "Checkboxes"}
+                    {item.questionItem?.question?.choiceQuestion?.type === "DROP_DOWN" && "Dropdown"}
+                    {item.questionItem?.question?.scaleQuestion && "Rating scale"}
+                    {item.questionItem?.question?.dateQuestion && "Date"}
+                    {item.questionItem?.question?.timeQuestion && "Time"}
+                    {item.questionItem?.question?.fileUploadQuestion && "File upload"}
+                    {!item.questionItem && "Question"}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3 min-h-10 text-sm text-muted-foreground">
+                {item.questionItem?.question?.choiceQuestion?.options?.map((opt, i) => (
+                  <div key={i} className="py-1">• {opt.value}</div>
+                )) || "Answer field"}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="h-px bg-border my-6" />
+        <Button disabled variant="secondary" className="w-full h-11">
+          Submit (preview)
+        </Button>
+      </div>
+    ) : (
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{title || "Untitled form"}</h2>
+        <div className="h-px bg-border my-6" />
+        <Button disabled variant="secondary" className="w-full h-11">
+          Submit (preview)
+        </Button>
+      </div>
+    )}
+  </div>
+);
 
 export default function CreateFormPage() {
   const { data: session, status } = useSession();
+  const [step, setStep] = useState<Step>("create");
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [generatingForm, setGeneratingForm] = useState(false);
   const [formStructure, setFormStructure] = useState<GoogleFormStructure | null>(null);
   const [error, setError] = useState("");
   const [createdForm, setCreatedForm] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   const generateForm = async () => {
     if (!prompt.trim()) {
-      setError("Please enter a prompt");
+      setError("Please enter a form description");
       return;
     }
 
@@ -39,6 +126,7 @@ export default function CreateFormPage() {
 
       if (data.success && data.formStructure) {
         setFormStructure(data.formStructure);
+        setStep("review");
       } else {
         throw new Error("Invalid response format");
       }
@@ -60,7 +148,7 @@ export default function CreateFormPage() {
       return;
     }
 
-    setGeneratingForm(true);
+    setStep("creating");
     setError("");
 
     try {
@@ -69,9 +157,7 @@ export default function CreateFormPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          formStructure
-        }),
+        body: JSON.stringify({ formStructure }),
       });
 
       const data = await response.json();
@@ -82,193 +168,290 @@ export default function CreateFormPage() {
 
       if (data.success && data.form) {
         setCreatedForm(data.form);
-        setFormStructure(null);
+        setTimeout(() => setStep("done"), 1600);
       } else {
         throw new Error("Invalid response format");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setGeneratingForm(false);
+      setStep("review");
     }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("Failed to copy:", e);
+    }
+  };
+
+  const resetForm = () => {
+    setPrompt("");
+    setFormStructure(null);
+    setCreatedForm(null);
+    setError("");
+    setStep("create");
   };
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Create Google Form</h1>
-        
-        {/* Authentication Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Google Authentication</h2>
-          
-          {!session ? (
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                You need to authenticate with Google to create forms in your Google Drive.
-              </p>
-              <button
-                onClick={() => signIn('google')}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-              >
-                Sign in with Google
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-green-600 font-medium">Authenticated with Google</span>
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+          <Card className="w-full max-w-md p-8 text-center border-border shadow-none">
+            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground mb-6">Please sign in with Google to create forms in your Google Drive.</p>
+            <Link href="/signin">
+              <Button className="w-full h-11">Sign In with Google</Button>
+            </Link>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const left = (() => {
+    if (step === "create" && loading)
+      return (
+        <div className="max-w-xl">
+          <h1 className="text-4xl font-semibold tracking-tight">Generating form...</h1>
+          <p className="text-muted-foreground mt-2">Using AI to create your form structure</p>
+          <div className="mt-8 space-y-4">
+            <Card className="p-5 border-border shadow-none">
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded-full w-3/4 animate-pulse" />
+                <div className="h-4 bg-muted rounded-full w-full animate-pulse" />
+                <div className="h-4 bg-muted rounded-full w-2/3 animate-pulse" />
               </div>
-              <p className="text-gray-600">
-                Welcome, {session.user?.name}! You can now create Google Forms in your Google Drive.
-              </p>
+            </Card>
+            <Card className="p-5 border-border shadow-none">
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded-full w-2/3 animate-pulse" />
+                <div className="h-4 bg-muted rounded-full w-full animate-pulse" />
+              </div>
+            </Card>
+          </div>
+          <Button disabled className="mt-6 w-full h-12 text-base">
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Generating form...
+          </Button>
+        </div>
+      );
+
+    if (step === "create")
+      return (
+        <div className="max-w-xl">
+          <h1 className="text-4xl font-semibold tracking-tight">Create a form</h1>
+          <p className="text-muted-foreground mt-2">
+            Describe your form in natural language and let AI generate it for you.
+          </p>
+          <Card className="mt-8 p-5 border-border shadow-none">
+            <label className="text-sm font-medium text-foreground block">What form do you want to create?</label>
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="A customer feedback form with name, email, rating and comments..."
+              className="mt-3 min-h-32 resize-none border-0 px-0 focus-visible:ring-0 shadow-none bg-transparent"
+            />
+          </Card>
+          {error && (
+            <div className="mt-4 flex gap-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
+          <Button
+            onClick={generateForm}
+            disabled={loading || !prompt.trim()}
+            className="mt-6 w-full h-12 text-base"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating form...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate form
+              </>
+            )}
+          </Button>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Tip:</span> Be specific about the form type, questions, and any special requirements.
+          </p>
         </div>
+      );
 
-        {/* Form Generation Section */}
-        {session && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Generate Form Structure</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-2">
-                  Describe your form
-                </label>
-                <textarea
-                  id="prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g., Create a customer feedback form with name, email, rating from 1-5 (as checkboxes), and comments section"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={4}
-                />
-              </div>
-              
-              <button
-                onClick={generateForm}
-                disabled={loading || !prompt.trim()}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {loading ? "Generating..." : "Generate Form Structure"}
-              </button>
-              
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                  {error}
-                </div>
+    if (step === "review")
+      return (
+        <div className="max-w-xl">
+          <button
+            onClick={() => setStep("create")}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to edit
+          </button>
+          <h1 className="text-4xl font-semibold tracking-tight mt-3">Review your form</h1>
+          <p className="text-muted-foreground mt-2">
+            Here's what will be created. Click "Create form" to publish it to your Google Drive.
+          </p>
+          <Card className="mt-8 p-6 border-border shadow-none">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Prompt</p>
+            <p className="font-medium leading-relaxed text-foreground">{prompt}</p>
+          </Card>
+          {error && (
+            <div className="mt-4 flex gap-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <Button variant="outline" className="h-11" onClick={() => setStep("create")}>
+              Go back
+            </Button>
+            <Button className="h-11" onClick={createGoogleForm} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Create form
+                </>
               )}
-            </div>
+            </Button>
           </div>
-        )}
+        </div>
+      );
 
-        {/* Form Structure Display */}
-        {formStructure && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Generated Form Structure</h2>
-            
+    if (step === "creating")
+      return (
+        <div className="h-full flex flex-col items-center justify-center text-center">
+          <div className="space-y-6 w-full">
             <div className="space-y-4">
+              <div className="w-16 h-16 rounded-full bg-foreground/10 grid place-items-center mx-auto relative">
+                <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+              </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {formStructure.info.title}
-                </h3>
-                {formStructure.info.description && (
-                  <p className="text-gray-600 mb-4">{formStructure.info.description}</p>
-                )}
+                <h2 className="text-2xl font-semibold tracking-tight">Creating your form</h2>
+                <p className="text-muted-foreground mt-2">Publishing to your Google Drive…</p>
               </div>
-              
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h4 className="font-medium text-gray-900 mb-2">Form Items:</h4>
-                <ul className="space-y-2">
-                  {formStructure.items.map((item, index) => (
-                    <li key={index} className="text-sm text-gray-700">
-                      • {item.title} ({item.questionItem?.question?.textQuestion?.type === 'SHORT_ANSWER' ? 'Short Text' : 
-                        item.questionItem?.question?.textQuestion?.type === 'PARAGRAPH' ? 'Long Text' :
-                        item.questionItem?.question?.choiceQuestion?.type === 'RADIO' ? 'Multiple Choice' :
-                        item.questionItem?.question?.choiceQuestion?.type === 'CHECKBOX' ? 'Checkboxes' :
-                        item.questionItem?.question?.scaleQuestion ? 'Rating Scale' :
-                        item.questionItem?.question?.dateQuestion ? 'Date' :
-                        item.questionItem?.question?.timeQuestion ? 'Time' :
-                        item.questionItem?.question?.fileUploadQuestion ? 'File Upload' :
-                        'Text input'})
-                    </li>
-                  ))}
-                </ul>
+            </div>
+            <div className="max-w-xs mx-auto space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-foreground/10 animate-pulse" />
+                <p className="text-sm text-muted-foreground">Generating form structure</p>
               </div>
-              
-              <button
-                onClick={createGoogleForm}
-                disabled={generatingForm}
-                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {generatingForm ? "Creating Google Form..." : "Create Google Form"}
-              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-foreground/5 animate-pulse" />
+                <p className="text-sm text-muted-foreground">Publishing to Google Drive</p>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      );
 
-        {/* Created Form Display */}
-        {createdForm && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Form Created Successfully!</h2>
-            
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                Your Google Form has been created and saved to your Google Drive!
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="font-medium text-gray-900">{createdForm.title}</h3>
-                {createdForm.description && (
-                  <p className="text-gray-600">{createdForm.description}</p>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <a
-                  href={createdForm.responderUri}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-center"
-                >
-                  View Form
-                </a>
-                <a
-                  href={createdForm.editLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-center"
-                >
-                  Edit Form
-                </a>
-              </div>
-              
-              <button
-                onClick={() => {
-                  setCreatedForm(null);
-                  setPrompt("");
-                }}
-                className="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700"
-              >
-                Create Another Form
-              </button>
+    return (
+      <div className="max-w-xl">
+        <h1 className="text-4xl font-semibold tracking-tight">Form created</h1>
+        <p className="text-muted-foreground mt-2">Your form has been published to your Google Drive.</p>
+        <Card className="mt-8 p-6 border-border shadow-none">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-foreground text-background grid place-items-center flex-shrink-0">
+              <Check className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Successfully created</p>
+              <p className="text-sm text-muted-foreground">Your form is live and ready to collect responses.</p>
             </div>
           </div>
-        )}
+          <div className="h-px bg-border my-5" />
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Form title</p>
+          <p className="font-semibold mt-1 text-foreground">{formStructure?.info.title || "Your form"}</p>
+        </Card>
+        <Button asChild className="mt-6 w-full h-12 text-base">
+          <a href={createdForm?.responderUri || "#"} target="_blank" rel="noreferrer">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Open form
+          </a>
+        </Button>
+        <div className="mt-3 flex gap-2">
+          <Input
+            readOnly
+            value={createdForm?.responderUri || ""}
+            className="h-11 font-mono text-xs border-border"
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 border-border"
+            onClick={() => copyToClipboard(createdForm?.responderUri || "")}
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
+        </div>
+        <Button variant="outline" className="mt-3 w-full h-11 border-border" onClick={resetForm}>
+          Create another form
+        </Button>
       </div>
+    );
+  })();
+
+  const right = (() => {
+    if (step === "creating")
+      return <Preview title={prompt.slice(0, 60)} loading />;
+    if (step === "done")
+      return (
+        <div className="h-full flex flex-col items-center justify-center text-center">
+          <div className="w-14 h-14 rounded-full bg-foreground text-background grid place-items-center mb-5">
+            <Check className="w-6 h-6" />
+          </div>
+          <h3 className="font-semibold text-lg text-foreground">Form published</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+            Your form is live in Google Drive and ready to collect responses.
+          </p>
+        </div>
+      );
+    if (step === "review" && formStructure)
+      return <Preview title={formStructure.info.title} formStructure={formStructure} />;
+    if (loading)
+      return <Preview title={prompt.slice(0, 60)} loading />;
+    return prompt.trim() ? <Preview title={prompt.slice(0, 60)} /> : <Preview empty />;
+  })();
+
+  const twoColumn = step === "review";
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar />
+      {twoColumn ? (
+        <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-64px)]">
+          <section className="px-6 lg:px-12 py-12 lg:border-r border-border">{left}</section>
+          <section className="px-6 lg:px-12 py-12 bg-muted/30">{right}</section>
+        </div>
+      ) : (
+        <div className="mx-auto max-w-2xl px-6 py-12 min-h-[calc(100vh-64px)] flex items-start justify-center">
+          <div className="w-full">{left}</div>
+        </div>
+      )}
     </div>
   );
 } 

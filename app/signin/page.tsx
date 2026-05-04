@@ -2,16 +2,26 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
-import { signIn } from "next-auth/react"
-import { useState } from "react"
+import { signIn, useSession } from "next-auth/react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const { status } = useSession()
+  const router = useRouter()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/create-form")
+    }
+  }, [status, router])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn("google", { callbackUrl: "/" })
+      await signIn("google", { callbackUrl: "/create-form" })
     } catch (error) {
       console.error("Sign in error:", error)
       setIsLoading(false)

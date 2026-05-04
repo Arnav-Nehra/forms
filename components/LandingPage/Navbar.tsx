@@ -1,13 +1,11 @@
 'use client'
 import { Button } from "@/components/ui/button"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { Avatar } from "../ui/avatar";
 import { AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { FileText, LogOut, User } from "lucide-react";
-import Image from "next/image";
-import { useEffect } from "react";
+import { FileText, LogOut, ClipboardList } from "lucide-react";
 
 export default function Navbar() {
   const {data:session,status} = useSession();
@@ -18,12 +16,12 @@ export default function Navbar() {
     <>
     <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#FF9494] to-[#FFD1D1]">
-            <span className="text-sm font-bold text-white">F</span>
+        <Link href="/" className="flex items-center space-x-2.5 hover:opacity-80 transition">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900">
+            <ClipboardList className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-semibold text-gray-900">FormAI</span>
-        </div>
+          <span className="text-xl font-bold text-gray-900">FormsAI</span>
+        </Link>
         <div className="flex items-center space-x-3">
           {status === "authenticated" ? (
             <DropdownMenu>
@@ -48,20 +46,16 @@ export default function Navbar() {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="mr-2 h-4 w-4" />
-                <span>My Forms</span>
+              <DropdownMenuItem asChild>
+                <Link href="/my-forms" className="flex items-center cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>My Forms</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="">
-                <Link className="flex items-center" href={"/api/auth/signout"}>
+              <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span className="ml-2 ">Logout</span>
-                </Link>
+                <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -70,7 +64,9 @@ export default function Navbar() {
               <Button variant="ghost">Sign In</Button>
             </Link>
           )}
-           <Button className={`bg-gray-900 hover:bg-gray-800 text-white rounded-md ${status === "authenticated" ? "hidden" : ""}`}>Get started</Button>
+          <Link href="/signin" className={status === "authenticated" ? "hidden" : ""}>
+            <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-md">Get started</Button>
+          </Link>
         </div>
       </div>
     </nav>

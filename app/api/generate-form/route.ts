@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     });
 
     const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         { role: "user", parts: [{ text: systemPrompt }] },
         { role: "user", parts: [{ text: `Convert this natural language description to Google Forms JSON: ${prompt}` }] }

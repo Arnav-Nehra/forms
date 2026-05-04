@@ -1,4 +1,3 @@
-import { PrismaClient } from "@/lib/generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import NextAuth, { NextAuthOptions } from "next-auth"    
@@ -43,6 +42,18 @@ export const authOptions : NextAuthOptions = {
             session.accessToken = token.accessToken;
             return session;
         },
+        async redirect({ url, baseUrl }) {
+            // If the callback url is relative, make it absolute
+            if (url.startsWith("/")) {
+                return `${baseUrl}${url}`;
+            }
+            // If it's an absolute URL and from the same base, return it
+            else if (new URL(url).origin === baseUrl) {
+                return url;
+            }
+            // Default redirect to create-form after signin
+            return `${baseUrl}/create-form`;
+        }
     }
 }
 
